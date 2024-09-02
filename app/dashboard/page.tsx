@@ -1,6 +1,7 @@
 "use client"
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { useAppSelector } from '@/store/useStore';
 
 interface Project {
   name: string;
@@ -525,7 +527,15 @@ const ClientOverviewCard: React.FC<ClientOverviewCardProps> = ({ clientProjects,
   return <ProjectCard project={combinedProject} isMonthly={isMonthly} />;
 };
 export default function Component() {
+  const router = useRouter()
   const [isMonthly, setIsMonthly] = useState(false);
+  const isLogin = useAppSelector((state) => state.app.isLogin);
+  
+  useEffect(() => {
+    if (!isLogin) {
+      router.push('/login');
+    } 
+  }, []);
 
   const clientProjects = useMemo(() => {
     const groupedProjects: ProjectGroup = allProjects.reduce((acc: ProjectGroup, project: Project) => {
