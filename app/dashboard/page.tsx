@@ -10,7 +10,61 @@ import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
-const fixedFeeProjects = [
+interface Project {
+  name: string;
+  budget?: number;
+  revenue?: number;
+  labor?: number;
+  overhead?: number;
+  profit?: number;
+  profitMargin?: number;
+  hoursUsed?: number;
+  budgetedHours?: number;
+  mtdHours?: number;
+  mtdCost?: number;
+  quotedRate?: number;
+  achievedRate?: number;
+}
+
+interface ProjectGroup {
+  [key: string]: Project[];
+}
+
+interface WeeklyHoursData {
+  week: number;
+  Total?: number;
+  'Fixed Fee'?: number;
+  'T&M'?: number;
+  [key: string]: number | string | undefined; // Allows dynamic keys
+}
+
+interface WeeklyHoursChartProps {
+  projectName: string;
+  isOverview?: boolean;
+}
+
+interface FinancialBarProps {
+  project: Project;
+  isMonthly: boolean;
+}
+
+interface ProjectCardProps {
+  project: Project;
+  isMonthly: boolean;
+}
+
+interface ClientOverviewCardProps {
+  clientProjects: Project[];
+  isMonthly: boolean;
+}
+
+interface FinancialOverviewProps {
+  projects: Project[];
+  isMonthly: boolean;
+  projectType: 'overview' | 'fixed-fee' | 't&m' | 'tnm';
+}
+
+const fixedFeeProjects: Project[] = [
   { name: "TechGiant:Quantum Leap Animation", budget: 10000, revenue: 10000, labor: 870, overhead: 383, profit: 4247, profitMargin: 42, hoursUsed: 19, budgetedHours: 20, achievedRate: 515, quotedRate: 500, mtdHours: 8.9, mtdCost: 467 },
   { name: "TechGiant:NanoBot Assembly Line", budget: 17450, revenue: 17450, labor: 1283, overhead: 565, profit: 15602, profitMargin: 89, hoursUsed: 45, budgetedHours: 134, achievedRate: 392, quotedRate: 130, mtdHours: 44.5, mtdCost: 1283 },
   { name: "TechGiant:HoverCraft Prototype", budget: 17700, revenue: 17700, labor: 3597, overhead: 1582, profit: 12521, profitMargin: 71, hoursUsed: 115, budgetedHours: 136, achievedRate: 154, quotedRate: 130, mtdHours: 28.3, mtdCost: 841 },
@@ -22,7 +76,7 @@ const fixedFeeProjects = [
   { name: "GreenEnergy:Solar Panel Efficiency Study", budget: 9000, revenue: 9000, labor: 17832, overhead: 7846, profit: -16678, profitMargin: -185, hoursUsed: 424, budgetedHours: 82, achievedRate: 21, quotedRate: 110, mtdHours: 0.5, mtdCost: 19 },
 ];
 
-const tnmProjects = [
+const tnmProjects: Project[] = [
   { name: "WaterWorks:Hydro-Electric Dam Visualization", budget: 78000, revenue: 58000, labor: 23198, overhead: 10207, profit: 24595, profitMargin: 42, hoursUsed: 387, budgetedHours: 520, achievedRate: 150, quotedRate: 150, mtdHours: 83.2, mtdCost: 4676 },
   { name: "WaterWorks:AI-Powered Water Treatment", budget: 31500, revenue: 31738, labor: 10875, overhead: 4785, profit: 16077, profitMargin: 51, hoursUsed: 212, budgetedHours: 210, achievedRate: 150, quotedRate: 150, mtdHours: 3.0, mtdCost: 147 },
   { name: "WaterWorks:Smart Faucet Design Language", budget: 22500, revenue: 23288, labor: 8490, overhead: 3736, profit: 11062, profitMargin: 48, hoursUsed: 155, budgetedHours: 150, achievedRate: 150, quotedRate: 150, mtdHours: 8.5, mtdCost: 490 },
@@ -44,9 +98,9 @@ const tnmProjects = [
   { name: "OfficeInnovate:Smart Office Solutions", budget: 150000, revenue: 1840, labor: 422, overhead: 186, profit: 1233, profitMargin: 67, hoursUsed: 16, budgetedHours: 1304, achievedRate: 115, quotedRate: 115, mtdHours: 16.0, mtdCost: 422 },
 ];
 
-const allProjects = [...fixedFeeProjects, ...tnmProjects];
+const allProjects: Project[]  = [...fixedFeeProjects, ...tnmProjects];
 
-const weeklyHoursData = [
+const weeklyHoursData:WeeklyHoursData[] = [
   {
     week: 31,
     "TechGiant:Quantum Leap Animation": 1.6,
@@ -185,72 +239,8 @@ const weeklyHoursData = [
   }
 ];
 
-// The rest of the component remains the same, just with updated project names
-// ... (WeeklyHoursChart, FinancialBar, ProjectCard, FinancialOverview, ClientOverviewCard, and main Component)
 
-export default function Component() {
-  const [isMonthly, setIsMonthly] = useState(false);
-
-  const clientProjects = useMemo(() => {
-    const groupedProjects = allProjects.reduce((acc, project) => {
-      const clientName = project.name.split(':')[0];
-      if (!acc[clientName]) {
-        acc[clientName] = [];
-      }
-      acc[clientName].push(project);
-      return acc;
-    }, {});
-    return Object.values(groupedProjects);
-  }, []);
-
-  return (
-    <div className="p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold mb-6">Financial Health Dashboard - August 2024</h1>
-      
-      <div className="flex items-center space-x-2 mb-4">
-        <Switch id="monthly-toggle" checked={isMonthly} onCheckedChange={setIsMonthly} />
-        <Label htmlFor="monthly-toggle">Show Monthly Data</Label>
-      </div>
-
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="fixed-fee">Fixed Fee</TabsTrigger>
-          <TabsTrigger value="tnm">T&M</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview">
-          <FinancialOverview projects={allProjects} isMonthly={isMonthly} projectType="overview" />
-          <h2 className="text-2xl font-semibold mb-4 mt-6">Client Overview</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {clientProjects.map((projects, index) => (
-              <ClientOverviewCard key={index} clientProjects={projects} isMonthly={isMonthly} />
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent value="fixed-fee">
-          <FinancialOverview projects={fixedFeeProjects} isMonthly={isMonthly} projectType="fixed-fee" />
-          <h2 className="text-2xl font-semibold mb-4 mt-6">Fixed Fee Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {fixedFeeProjects.map(project => (
-              <ProjectCard key={project.name} project={project} isMonthly={isMonthly} />
-            ))}
-          </div>
-        </TabsContent>
-        <TabsContent value="tnm">
-          <FinancialOverview projects={tnmProjects} isMonthly={isMonthly} projectType="tnm" />
-          <h2 className="text-2xl font-semibold mb-4 mt-6">T&M Projects</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tnmProjects.map(project => (
-              <ProjectCard key={project.name} project={project} isMonthly={isMonthly} />
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-const WeeklyHoursChart = ({ projectName, isOverview = false }) => {
+const WeeklyHoursChart: React.FC<WeeklyHoursChartProps> = ({ projectName, isOverview = false }) => {
   const data = useMemo(() => {
     if (isOverview) {
       return weeklyHoursData.map(week => ({
@@ -267,7 +257,7 @@ const WeeklyHoursChart = ({ projectName, isOverview = false }) => {
       // Individual project
       return weeklyHoursData.map(week => ({
         week: week.week,
-        hours: week[projectName] || 0
+        hours: (week as any)[projectName] || 0
       }));
     } else {
       // Client total
@@ -275,7 +265,7 @@ const WeeklyHoursChart = ({ projectName, isOverview = false }) => {
         week: week.week,
         hours: Object.entries(week)
           .filter(([key, value]) => key.startsWith(projectName) && typeof value === 'number')
-          .reduce((sum, [, value]) => sum + value, 0)
+          .reduce((sum, [, value]) => sum + Number(value), 0)
       }));
     }
   }, [projectName, isOverview]);
@@ -304,12 +294,15 @@ const WeeklyHoursChart = ({ projectName, isOverview = false }) => {
         <RechartsTooltip
           content={({ active, payload, label }) => {
             if (active && payload && payload.length) {
-              return (
-                <div className="bg-background border border-border rounded p-2 text-xs">
-                  <p>Week {label}</p>
-                  <p className="font-bold">{payload[0].value.toFixed(2)} hours</p>
-                </div>
-              );
+              const value = payload[0]?.value;
+              if (typeof value === 'number') {
+                return (
+                  <div className="bg-background border border-border rounded p-2 text-xs">
+                    <p>Week {label}</p>
+                    <p className="font-bold">{value.toFixed(2)} hours</p>
+                  </div>
+                );
+              }
             }
             return null;
           }}
@@ -327,49 +320,55 @@ const WeeklyHoursChart = ({ projectName, isOverview = false }) => {
   );
 };
 
-const FinancialBar = ({ project, isMonthly }) => {
-  const revenue = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.revenue : project.revenue;
-  const labor = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.labor : project.labor;
-  const overhead = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.overhead : project.overhead;
-  const profit = isMonthly ? revenue - labor - overhead : project.profit;
+const FinancialBar: React.FC<FinancialBarProps> = ({ project, isMonthly }) => {
+  if (project.mtdCost && project.labor && project.overhead && project.revenue && project.budget) {
+    const revenue = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.revenue : project.revenue;
+    const labor = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.labor : project.labor;
+    const overhead = isMonthly ? (project.mtdCost / (project.labor + project.overhead)) * project.overhead : project.overhead;
+    let profit = isMonthly ? revenue - labor - overhead : project.profit;
+  
 
-  const total = labor + overhead + Math.abs(profit);
-  const laborWidth = (labor / total) * 100;
-  const overheadWidth = (overhead / total) * 100;
-  const profitWidth = (Math.abs(profit) / total) * 100;
-
-  return (
-    <div className="relative h-6 w-full bg-gray-200 rounded-full overflow-hidden">
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="absolute top-0 left-0 h-full bg-orange-500" style={{ width: `${laborWidth}%` }}></div>
-          </TooltipTrigger>
-          <TooltipContent>Labor: ${labor.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="absolute top-0 left-0 h-full bg-yellow-500" style={{ width: `${overheadWidth}%`, left: `${laborWidth}%` }}></div>
-          </TooltipTrigger>
-          <TooltipContent>Overhead: ${overhead.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className={`absolute top-0 right-0 h-full ${profit >= 0 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${profitWidth}%` }}></div>
-          </TooltipTrigger>
-          <TooltipContent>{profit >= 0 ? 'Profit' : 'Loss'}: ${Math.abs(profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <div className="absolute top-0 left-0 h-full border-l border-gray-400" style={{ left: `${(project.budget / revenue) * 100}%` }}></div>
-    </div>
-  );
+    if (!profit) profit = 0;
+    const total = labor + overhead + Math.abs(profit ?? 0);
+    const laborWidth = (labor / total) * 100;
+    const overheadWidth = (overhead / total) * 100;
+    const profitWidth = (Math.abs(profit ?? 0) / total) * 100;
+  
+    
+    return (
+      <div className="relative h-6 w-full bg-gray-200 rounded-full overflow-hidden">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-0 left-0 h-full bg-orange-500" style={{ width: `${laborWidth}%` }}></div>
+            </TooltipTrigger>
+            <TooltipContent>Labor: ${labor.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-0 left-0 h-full bg-yellow-500" style={{ width: `${overheadWidth}%`, left: `${laborWidth}%` }}></div>
+            </TooltipTrigger>
+            <TooltipContent>Overhead: ${overhead.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className={`absolute top-0 right-0 h-full ${profit >= 0 ? 'bg-green-500' : 'bg-red-500'}`} style={{ width: `${profitWidth}%` }}></div>
+            </TooltipTrigger>
+            <TooltipContent>{profit >= 0 ? 'Profit' : 'Loss'}: ${Math.abs(profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <div className="absolute top-0 left-0 h-full border-l border-gray-400" style={{ left: `${(project.budget / revenue) * 100}%` }}></div>
+      </div>
+    );
+  }
+  
 };
 
-const ProjectCard = ({ project, isMonthly }) => {
+const ProjectCard: React.FC<ProjectCardProps> = ({ project, isMonthly }) => {
   const runway = (project.budgetedHours || 0) - (project.hoursUsed || 0);
   const isOverBudget = (project.revenue || 0) > (project.budget || 0);
   const isOverHours = (project.hoursUsed || 0) > (project.budgetedHours || 0);
@@ -449,7 +448,7 @@ const ProjectCard = ({ project, isMonthly }) => {
   );
 };
 
-const FinancialOverview = ({ projects, isMonthly, projectType }) => {
+const FinancialOverview: React.FC<FinancialOverviewProps> = ({ projects, isMonthly, projectType }) => {
   const totalB = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
   const totalR = isMonthly 
     ? projects.reduce((sum, p) => sum + ((p.mtdCost || 0) / ((p.labor || 0) + (p.overhead || 0))) * (p.revenue || 0), 0)
@@ -487,18 +486,21 @@ const FinancialOverview = ({ projects, isMonthly, projectType }) => {
   return <ProjectCard project={overviewProject} isMonthly={isMonthly} />;
 };
 
-const ClientOverviewCard = ({ clientProjects, isMonthly }) => {
+const ClientOverviewCard: React.FC<ClientOverviewCardProps> = ({ clientProjects, isMonthly }) => {
+  // Get the client name from the first project
   const clientName = clientProjects[0].name.split(':')[0];
+
+  // Initialize the combined project object with default values
   const combinedProject = clientProjects.reduce((acc, project) => {
-    acc.budget += project.budget;
-    acc.revenue += project.revenue;
-    acc.labor += project.labor;
-    acc.overhead += project.overhead;
-    acc.profit += project.profit;
-    acc.hoursUsed += project.hoursUsed;
-    acc.budgetedHours += project.budgetedHours;
-    acc.mtdHours += project.mtdHours;
-    acc.mtdCost += project.mtdCost;
+    acc.budget = (acc.budget ?? 0) +  (project.budget ?? 0);
+    acc.revenue = (acc.revenue ?? 0) + (project.revenue ?? 0);
+    acc.labor = (acc.labor ?? 0) + (project.labor ?? 0);
+    acc.overhead = (acc.overhead ?? 0) + (project.overhead ?? 0);
+    acc.profit = (acc.profit ?? 0) + (project.profit ?? 0);
+    acc.hoursUsed = (acc.hoursUsed ?? 0) + (project.hoursUsed ?? 0);
+    acc.budgetedHours = (acc.budgetedHours ?? 0) + (project.budgetedHours ?? 0);
+    acc.mtdHours = (acc.mtdHours ?? 0) + (project.mtdHours ?? 0);
+    acc.mtdCost = (acc.mtdCost ?? 0) + (project.mtdCost ?? 0);
     return acc;
   }, {
     name: clientName,
@@ -511,11 +513,75 @@ const ClientOverviewCard = ({ clientProjects, isMonthly }) => {
     budgetedHours: 0,
     mtdHours: 0,
     mtdCost: 0,
-    quotedRate: clientProjects[0].quotedRate,
-    achievedRate: clientProjects.reduce((sum, p) => sum + p.achievedRate, 0) / clientProjects.length,
+    quotedRate: clientProjects[0].quotedRate ?? 0,
+    achievedRate: clientProjects.reduce((sum, p) => sum + (p.achievedRate ?? 0), 0) / clientProjects.length,
   });
 
-  combinedProject.profitMargin = (combinedProject.profit / combinedProject.revenue) * 100;
+  // Calculate profit margin
+  if (combinedProject.revenue) {
+    combinedProject.profitMargin = combinedProject.revenue > 0 ? ((combinedProject.profit ?? 0) / combinedProject.revenue) * 100 : 0;
+  }
 
   return <ProjectCard project={combinedProject} isMonthly={isMonthly} />;
 };
+export default function Component() {
+  const [isMonthly, setIsMonthly] = useState(false);
+
+  const clientProjects = useMemo(() => {
+    const groupedProjects: ProjectGroup = allProjects.reduce((acc: ProjectGroup, project: Project) => {
+      const clientName = project.name.split(':')[0];
+      if (!acc[clientName]) {
+        acc[clientName] = [];
+      }
+      acc[clientName].push(project);
+      return acc;
+    }, {});
+    return Object.values(groupedProjects);
+  }, []);
+
+  return (
+    <div className="p-8 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-6">Financial Health Dashboard - August 2024</h1>
+      
+      <div className="flex items-center space-x-2 mb-4">
+        <Switch id="monthly-toggle" checked={isMonthly} onCheckedChange={setIsMonthly} />
+        <Label htmlFor="monthly-toggle">Show Monthly Data</Label>
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="fixed-fee">Fixed Fee</TabsTrigger>
+          <TabsTrigger value="tnm">T&M</TabsTrigger>
+        </TabsList>
+        <TabsContent value="overview">
+          <FinancialOverview projects={allProjects} isMonthly={isMonthly} projectType="overview" />
+          <h2 className="text-2xl font-semibold mb-4 mt-6">Client Overview</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {clientProjects.map((projects, index) => (
+              <ClientOverviewCard key={index} clientProjects={projects} isMonthly={isMonthly} />
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="fixed-fee">
+          <FinancialOverview projects={fixedFeeProjects} isMonthly={isMonthly} projectType="fixed-fee" />
+          <h2 className="text-2xl font-semibold mb-4 mt-6">Fixed Fee Projects</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {fixedFeeProjects.map(project => (
+              <ProjectCard key={project.name} project={project} isMonthly={isMonthly} />
+            ))}
+          </div>
+        </TabsContent>
+        <TabsContent value="tnm">
+          <FinancialOverview projects={tnmProjects} isMonthly={isMonthly} projectType="tnm" />
+          <h2 className="text-2xl font-semibold mb-4 mt-6">T&M Projects</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {tnmProjects.map(project => (
+              <ProjectCard key={project.name} project={project} isMonthly={isMonthly} />
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
