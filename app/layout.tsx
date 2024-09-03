@@ -1,18 +1,12 @@
 "use client";
 
 import './globals.css'
-import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Provider } from 'react-redux'
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/store/useStore'
 
 const inter = Inter({ subsets: ['latin'] })
-
-export const metadata: Metadata = {
-  title: 'Financial Dashboard',
-  description: 'A comprehensive financial dashboard',
-}
 
 export default function RootLayout({
   children,
